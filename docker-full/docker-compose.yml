@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  ros2:
+    build: .
+    network_mode: host
+    ipc: host
+    volumes:
+      - /home/hiep/ros2:/ros2
+    devices:
+      - /dev/ttyAMA10:/dev/ttyAMA10
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      # - /dev/video0:/dev/video0
+      - /dev/input/event5:/dev/input/event5
+    tty: true
+    environment:
+      - DISPLAY
