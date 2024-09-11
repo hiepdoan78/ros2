@@ -1,0 +1,430 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="truck" >
+  
+  <xacro:include filename="ros2_control.xacro" />
+
+  <xacro:arg name="wheel_diameter" default="0.09"/>
+
+  <xacro:property name="wheel_radius" value="${$(arg wheel_diameter)/2}"/>
+  <xacro:property name="wheel_diameter" value="0.09"/>
+  <xacro:property name="wheel_width" value="0.02"/>
+  <xacro:property name="car_width" value="0.492"/>
+  <xacro:property name="cabin_width" value="0.21"/>
+  <xacro:property name="trunk_width" value="0.22"/>
+  <xacro:property name="wheel_friction" value="0.8"/>
+  <xacro:property name="wheelbase_length" value="0.26"/>
+  <xacro:property name="cabin_length" value="0.16"/>
+  <xacro:property name="trunk_length" value="0.334"/>
+  <xacro:property name="front_wheelbase_width" value="0.198"/>
+  <xacro:property name="rear_wheelbase_width" value="0.204"/>
+  <xacro:property name="wheelbase_width" value="0.213"/>
+  <xacro:property name="wheel_mass" value="0.1"/>
+  <xacro:property name="total_mass" value = "3.0"/>
+  <xacro:property name="chassis_height" value = "0.286"/>
+  <xacro:property name="cabin_height" value = "${chassis_height - wheel_diameter}"/>
+  <xacro:property name="trunk_height" value = "0.115"/>
+  <xacro:property name="chassis_elevation" value = "-0.01"/>
+  <xacro:property name="chassis_mass" value = "${total_mass-4*wheel_mass}"/>
+  <xacro:property name="cabin_mass" value = "${chassis_mass/2}"/>
+  <xacro:property name="trunk_mass" value = "${chassis_mass/2}"/>
+
+  <!-- COLOR -->
+    <material name="blue">
+      <color rgba="0.2 0.2 1 1"/>
+    </material>
+
+    <material name="white">
+      <color rgba="1 1 1 1" />
+    </material>
+
+    <material name="black">
+      <color rgba="0 0 0 1"/>
+    </material>
+    
+    <material name="red">
+        <color rgba="1 0 0 1"/>
+    </material>
+
+    <material name="gray">
+        <color rgba="0.5 0.5 0.5 1"/>
+    </material>
+
+    <material name="invisible">
+      <color rgba="0.0 0.0 0.0 0.0"/>
+    </material>
+
+  <!-- INERTIAL -->
+  <xacro:macro name="cylinder_inertia" params="m r h">
+        <inertia  ixx="${m*(3*r*r+h*h)/12}" ixy = "0" ixz = "0"
+                    iyy="${m*(3*r*r+h*h)/12}" iyz = "0"
+                    izz="${m*r*r/2}" /> 
+  </xacro:macro>
+
+  <xacro:macro name="box_inertia" params="m x y z">
+          <inertia  ixx="${m*(y*y+z*z)/12}" ixy = "0" ixz = "0"
+                    iyy="${m*(x*x+z*z)/12}" iyz = "0"
+                    izz="${m*(x*x+z*z)/12}" /> 
+  </xacro:macro>
+
+  <xacro:macro name="sphere_inertia" params="m r">
+          <inertia  ixx="${2*m*r*r/5}" ixy = "0" ixz = "0"
+                    iyy="${2*m*r*r/5}" iyz = "0"
+                    izz="${2*m*r*r/5}" /> 
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertial" params="m r h">
+    <inertial>
+      <mass value="${m}"/>
+      <xacro:cylinder_inertia m="${m}" r="${r}" h="${h}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- BASE FOOTPRINT -->
+
+  <link name="base_footprint">
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="base_footprint"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>  
+   <!-- BASE LINK -->
+  <link name="base_link">
+
+  </link>
+  <!-- CABIN LINK -->
+  <link name="cabin_link">
+    <visual>
+      <geometry>
+        <box size="${cabin_length} ${cabin_width} ${cabin_height}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${cabin_length} ${cabin_width} ${cabin_height}"/>
+      </geometry>
+      <material name="blue"/>
+    </collision>
+    <inertial>
+      <mass value="${cabin_mass}"/>
+      <xacro:box_inertia m="${0.5*chassis_mass}" x="${cabin_length}" y="${cabin_width}" z="${cabin_height}"/>
+    </inertial>
+  </link>
+
+  <joint name="cabin_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="cabin_link"/>
+    <origin rpy="0 0 0" xyz="${cabin_length/2} 0 ${cabin_height/2 + wheel_diameter}"/>
+  </joint>
+
+  <gazebo reference="cabin_link">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+
+    <!-- TRUNK LINK -->
+  <link name="trunk_link">
+    <visual>
+      <geometry>
+        <box size="${trunk_length} ${trunk_width} ${trunk_height}"/>
+      </geometry>
+        <material name="white"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${trunk_length} ${trunk_width} ${trunk_height}"/>
+      </geometry>
+        <material name="white"/>
+    </collision>
+    <inertial>
+      <mass value="${trunk_mass}"/>
+      <xacro:box_inertia m="${0.5*chassis_mass}" x="${trunk_length}" y="${trunk_width}" z="${trunk_height}"/>
+    </inertial>
+  </link>
+
+  <gazebo reference="trunk_link">
+        <material>Gazebo/White</material>
+    </gazebo>
+
+  <joint name="trunk_joint" type="fixed">
+      <parent link="cabin_link"/>
+      <child link="trunk_link"/>
+      <origin rpy="0 0 0" xyz="${-cabin_length/2 - trunk_length/2} 0 ${-cabin_height/2 + trunk_height/2}"/>
+  </joint>
+
+  <!-- CAMERA LINK -->
+  <link name="camera_link">
+    <visual>
+      <geometry>
+       <box size="0.02 0.025 0.03"/> 
+      </geometry>
+       <material name="red"/>
+    </visual> 
+  </link>  
+
+  <joint name="camera_joint" type="fixed">
+        <parent link="cabin_link"/>
+        <child link="camera_link"/>
+        <origin xyz="${cabin_length/2 + 0.01} 0 0" rpy="0 0 0"/>
+    </joint>
+
+ <joint name="camera_optical_joint" type="fixed">
+        <parent link="camera_link"/>
+        <child link="camera_link_optical"/>
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+
+    <link name="camera_link_optical"></link>
+
+    <gazebo reference="camera_link">
+        <material>Gazebo/Red</material>
+
+        <sensor name="camera" type="camera">
+            <pose> 0 0 0 0 0 0 </pose>
+            <visualize>true</visualize>
+            <update_rate>10</update_rate>
+            <camera>
+                <horizontal_fov>1.089</horizontal_fov>
+                <image>
+                    <format>R8G8B8</format>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+                <clip>
+                    <near>0.05</near>
+                    <far>8.0</far>
+                </clip>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <frame_name>camera_link_optical</frame_name>
+            </plugin>
+        </sensor>
+    </gazebo>
+  
+  <!-- LASER -->
+  <link name="laser">
+    <visual>
+          <geometry>
+              <cylinder radius="0.05" length="0.042"/>
+          </geometry>
+          <material name="red"/>
+      </visual>
+      <collision>
+          <geometry>
+              <cylinder radius="0.045" length="0.02"/>
+          </geometry>
+      </collision>
+    <inertial>
+      <mass value="1e-5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+
+
+  <gazebo reference="laser">
+    <sensor type="ray" name="laser_scanner">
+    <always_on>true</always_on>
+    <pose> 0 0 0 0 0 0 </pose>
+    <visualize>true</visualize>
+    <update_rate>10</update_rate>
+    <ray>
+      <scan>
+        <horizontal>
+          <samples>360</samples>
+          <min_angle>-3.14</min_angle>
+          <max_angle>3.14</max_angle>
+        </horizontal>
+      </scan>
+      <range>
+        <min>0.3</min>
+        <max>15</max>
+      </range>
+    </ray>
+      <plugin name="scan" filename="libgazebo_ros_ray_sensor.so">      
+      <ros>
+        <argument>~/out:=scan</argument>
+      </ros>
+      <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>laser</frame_name>
+    </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="laser">
+        <material>Gazebo/Red</material>
+    </gazebo>
+
+  <joint name="laser_scanner_joint" type="fixed">
+      <origin rpy="0 0 0" xyz="0 0 ${0.021 + cabin_height/2}"/>
+      <parent link="cabin_link"/>
+      <child link="laser"/>
+  </joint>
+
+  <!-- BACK LEFT WHEEL -->
+  <link name="back_left_wheel">
+    <visual>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+    </collision>
+
+    <xacro:cylinder_inertial m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+  </link>
+
+  <gazebo reference="back_left_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+  
+  <joint name="back_left_wheel_joint" type="continuous">
+      <axis xyz="0 0 1"/>
+      <parent link="trunk_link"/>
+      <child link="back_left_wheel"/>
+      <origin rpy="-${pi/2} 0 0" xyz="${-0.121} ${rear_wheelbase_width/2} ${-trunk_height/2-wheel_radius}"/>
+      <limit effort="1000.0" velocity="24.0"/>
+      <dynamics damping="0.2"/>
+      <mimic joint="virtual_rear_wheel_joint" multiplier="1.0" offset="0.0"/>
+  </joint>
+
+  <!-- BACK RIGHT WHEEL -->
+  <link name="back_right_wheel">
+    <visual>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+    </collision>
+    <xacro:cylinder_inertial m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+  </link>
+
+  <gazebo reference="back_right_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+  <joint name="back_right_wheel_joint" type="continuous">
+      <axis xyz="0 0 1"/>
+      <parent link="trunk_link"/>
+      <child link="back_right_wheel"/>
+      <origin rpy="-${pi/2} 0 0" xyz="${-0.121} ${-rear_wheelbase_width/2} ${-trunk_height/2-wheel_radius}"/>
+      <limit effort="1000.0" velocity="24.0"/>
+      <dynamics damping="0.2"/>
+      <mimic joint="virtual_rear_wheel_joint" multiplier="1.0" offset="0.0"/>
+    </joint>
+
+  <!-- VITUAL REAR WHEEL -->
+  <link name="virtual_rear_wheel">
+    <visual>
+      <geometry>
+        <cylinder length="0.01" radius="${wheel_radius}"/>
+      </geometry>
+      <material name="invisible"/>
+    </visual>
+  </link>
+
+  <joint name="virtual_rear_wheel_joint" type="continuous">
+    <parent link="trunk_link"/>
+    <child link="virtual_rear_wheel"/>
+    <origin rpy="-${pi/2} 0 0" xyz="${-0.121} 0 ${-trunk_height/2-wheel_radius}"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" velocity="24.0"/>
+    <dynamics damping="0.2"/>
+  </joint>
+
+  <!-- FRONT LEFT WHEEL -->
+  <link name="front_left_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}"/>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+    </collision>
+    <xacro:cylinder_inertial m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+  </link>
+
+  <gazebo reference="front_left_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+  <joint name="front_left_wheel_joint" type="revolute">
+      <axis xyz="0 0 1"/>
+      <parent link="cabin_link"/>
+      <child link="front_left_wheel"/>
+      <origin rpy="0 0 ${pi/2}" xyz="${cabin_length/2 - 0.111} ${front_wheelbase_width/2 - wheel_width/2} ${- cabin_height/2 - wheel_radius}"/>
+      <limit lower="-${30.21817774*pi/180}" upper="${30.21817774*pi/180}" effort="100.0" velocity="0.0"/>
+      <dynamics damping="0.2"/>
+      <mimic joint="virtual_front_wheel_joint" multiplier="1.0" offset="0.0"/>
+    </joint>
+  
+  <!-- FRONT RIGHT WHEEL -->
+  <link name="front_right_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}"/>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+      </geometry>
+    </collision>
+    <xacro:cylinder_inertial m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+  </link>
+
+   <gazebo reference="front_right_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+  <joint name="front_right_wheel_joint" type="revolute">
+    <axis xyz="0 0 1"/>
+    <parent link="cabin_link"/>
+    <child link="front_right_wheel"/>
+    <origin rpy="0 0 ${pi/2}" xyz="${cabin_length/2 - 0.111} ${-front_wheelbase_width/2 + wheel_width/2} ${- cabin_height/2 - wheel_radius}"/>
+    <limit lower="-${30.21817774*pi/180}" upper="${30.21817774*pi/180}" effort="100.0" velocity="0.0"/>
+    <dynamics damping="0.2"/>
+    <mimic joint="virtual_front_wheel_joint" multiplier="1.0" offset="0.0"/>
+  </joint>
+  <!-- VITUAL FRONT WHEEL -->
+
+  <link name="virtual_front_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}"/>
+      <geometry>
+        <cylinder length="0.01" radius="${wheel_radius}"/>
+      </geometry>
+      <material name="invisible"/>
+    </visual>
+  </link>
+
+  <joint name="virtual_front_wheel_joint" type="revolute">
+    <parent link="cabin_link"/>
+    <child link="virtual_front_wheel"/>
+    <origin xyz="${cabin_length/2 - 0.111} 0 ${- cabin_height/2 - wheel_radius}" rpy="0 0 ${pi/2}"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-${30.21817774*pi/180}" upper="${30.21817774*pi/180}" effort="100.0" velocity="0.0"/>
+    <dynamics damping="0.2"/>
+  </joint>
+
+ 
+</robot>
