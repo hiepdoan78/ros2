@@ -315,3 +315,112 @@ def find_0(arr):
         return 1
     else:
         return 0
+def steering_angle(image, lines):
+    wt, wd, dp = image.shape
+    center_frame = wd / 2
+    cv2.line(image, (wd // 2, wt), (wd // 2, 0), [230, 43, 239], 2)
+    x_left, x_right, y_left, y_right = [], [], [], []
+    offset_left, offset_right, y_offset_left, y_offset_right = [], [], [], []
+    max_left_offset, max_right_offset, center_lane_x, center_lane_y, i, j = 0, 0, 0, 0, 0, 0
+    ppm_y = 196/8.5
+    ratio_x = 60/640
+    angle_cam = math.radians(30)
+    dis_from_cam_to_max = 57.5
+    dis_from_cam_to_min = 22
+    for line in lines:
+        angle, x1, y1, x2, y2 = find_angle(image, line)
+        if x1 < center_frame:
+            x_left.append(x1)
+            y_left.append(y1)
+        elif x1 > center_frame:
+            x_right.append(x1)
+            y_right.append(y1)
+        if x2 < center_frame:
+            x_left.append(x2)
+            y_left.append(y2)
+        elif x2 > center_frame:
+            x_right.append(x2)
+            y_right.append(y2)
+
+    left_x_empty = find_0(x_left)
+    right_x_empty = find_0(x_right)
+
+    if left_x_empty == 0 and right_x_empty == 0:
+        line_left = np.polyfit(x_left, y_left, 1)
+        for i in range(len(y_right)):
+            line_left[1] -= y_right[i]
+            x_line_left = np.roots(line_left) // 1
+            line_left[1] += y_right[i]
+            a = np.int_(x_line_left[0])
+            dist_left = abs(np.int_(a - x_right[i]))
+            center_lane_left = abs(np.int_(dist_left // 2))
+            if a > 0:
+                center_lane_left += a
+            if np.int_(center_frame - center_lane_left) > 0:
+                offset_left.append(np.int_(center_frame - center_lane_left))
+                y_offset_left.append(y_right[i])
+            elif np.int_(center_frame - center_lane_left) < 0:
+                offset_right.append(np.int_(center_frame - center_lane_left))
+                y_offset_right.append(y_right[i])
+
+        line_right = np.polyfit(x_right, y_right, 1)
+        for i in range(len(y_left)):
+            line_right[1] -= y_left[i]
+            x_line_right = np.roots(line_right) // 1
+            line_right[1] += y_left[i]
+            b = np.int_(x_line_right[0])
+            dist_right = abs(np.int_(b - x_left[i]))
+            center_lane_right = abs(np.int_(dist_right // 2))
+            if np.int_(x_left[i]) > 0:
+                center_lane_right += np.int_(x_left[i])
+            if np.int_(center_frame - center_lane_right) > 0:
+                offset_left.append(np.int_(center_frame - center_lane_right))
+                y_offset_left.append(y_left[i])
+            elif np.int_(center_frame - center_lane_right) < 0:
+                offset_right.append(np.int_(center_frame - center_lane_right))
+                y_offset_right.append(y_left[i])
+
+        if len(offset_left) > 0:
+            max_left_offset, i = find_max(offset_left)
+        if len(offset_right) > 0:
+            max_right_offset, j = find_max(offset_right)
+
+        if abs(max_left_offset) > abs(max_right_offset):
+            center_lane_x = max_left_offset
+            center_lane_y = y_offset_left[i]
+        elif abs(max_left_offset) < abs(max_right_offset):
+            center_lane_x = max_right_offset
+            center_lane_y = y_offset_right[j]
+
+    if left_x_empty == 1 and right_x_empty == 0:
+        for i in range(len(y_right)):
+            x_left.append(0)
+            dist = abs(np.int_((x_left[i]) - (x_right[i])))
+            center_lane = abs(np.int_(dist // 2))
+            offset_left.append(np.int_(center_frame - center_lane))
+            y_offset_left.append(y_right[i])
+            max_left_offset, j = find_max(offset_left)
+            center_lane_x = max_left_offset
+            center_lane_y = y_offset_left[j]
+
+    if right_x_empty == 1 and left_x_empty == 0:
+        for i in range(len(y_left)):
+            x_right.append(wd)
+            dist = abs(np.int_((x_left[i]) - (x_right[i])))
+            center_lane = abs(np.int_(dist // 2))
+            offset_right.append(np.int_(center_frame - center_lane))
+            y_offset_right.append(y_left[i])
+            max_right_offset, j = find_max(offset_right)
+            center_lane_x = max_right_offset
+            center_lane_y = y_offset_right[j]
+
+    # find d
+    dis_from_cam_to_center_lane = dis_from_cam_to_max - ((wt-center_lane_y) / (ppm_y * math.cos(angle_cam)))
+
+    # find delta_x
+    ppm_center_lane = (480 / (wt - center_lane_y)) * 10.46
+    delta_x = center_lane_x/ppm_center_lane
+    angle = math.degrees(math.atan(delta_x/dis_from_cam_to_center_lane))
+    warnings.filterwarnings("ignore")
+
+    return angle
