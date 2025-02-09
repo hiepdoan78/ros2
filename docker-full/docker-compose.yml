@@ -9,7 +9,7 @@ services:
     devices:
       - /dev/ttyAMA10:/dev/ttyAMA10
       - /dev/ttyUSB0:/dev/ttyUSB0
-      # - /dev/video0:/dev/video0
+      - /dev/video0:/dev/video0
       - /dev/input/event5:/dev/input/event5
     tty: true
     environment:
