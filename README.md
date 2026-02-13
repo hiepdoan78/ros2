@@ -16,46 +16,46 @@ A semi-autonomous truck platform using ROS 2 on Raspberry Pi 5 for perception an
 https://youtu.be/xy0PPB-s8K4
 
 ## 🧠 System Architecture
-                +----------------------+
-                |        Camera        |
-                | Lane + Sign Detection|
-                +----------+-----------+
-                           |
-                +----------v-----------+
-                |    Raspberry Pi 5    |
-                |  ROS2 Processing     |
-                |  Perception + Logic  |
-                +----------+-----------+
-                           | UART
-                +----------v-----------+
-                |        STM32         |
-                | Vehicle Controller   |
-                | Steering / Motor /   |
-                | Container Lifter     |
-                +----------+-----------+
-                           |
-        +------------------+------------------+
-        |                                     |
-+-------v-------+                     +--------v--------+
-|     LiDAR     |                     |    Actuators    |
-|Obstacle Detect|                     | Motor / Servo   |
-+---------------+                     | Lift Mechanism  |
-                                      +----------------+
-
-
+```text
++----------------------+
+|        Camera        |
+| Lane + Sign Detection|
++----------+-----------+
+           |
++----------v-----------+
+|    Raspberry Pi 5    |
+|  ROS2 Processing     |
+|  Perception + Logic  |
++----------+-----------+
+           | UART
++----------v-----------+
+|        STM32         |
+| Vehicle Controller   |
+| Steering / Motor /   |
+| Container Lifter     |
++----------+-----------+
+           |
++------------------+------------------+
+|                                     |
++-------v-------+           +--------v--------+
+|     LiDAR     |           |    Actuators    |
+|Obstacle Detect|           | Motor / Servo   |
++---------------+           | Lift Mechanism  |
+                            +----------------+
+```
 ## Key Technologies
 
-# Robotics & Middleware
+### Robotics & Middleware
 * ROS 2 Humble
 * Sensor integration (Camera, LiDAR)
 * Autonomous navigation logic
 
-# Embedded Systems
+### Embedded Systems
 * STM32 microcontroller vehicle control
 * UART communication (Raspberry Pi ↔ STM32)
 * Real-time steering and speed control
 
-# Computer Vision
+### Computer Vision
 * Lane detection
 * Traffic sign recognition
 * Image processing pipeline
