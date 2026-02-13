@@ -311,7 +311,7 @@ hardware_interface::return_type CarlikeBotSystemHardware::read(
   double deltaSeconds = diff.count();
   time_ = new_time;
  
-// Read from serial connection
+  // Read from serial connection
   std::string received_data;
   double pos_prev = hw_interfaces_["traction"].state.position;
   if (serial_conn_.isOpen() && serial_conn_.available())
@@ -426,7 +426,6 @@ hardware_interface::return_type ros2_control_demo_example_11 ::CarlikeBotSystemH
       try
       {
         serial_conn_.write(formatted_command.str());
-        // RCLCPP_INFO(rclcpp::get_logger("CarlikeBotSystemHardware"), "Sending command: %s", formatted_command.str().c_str());
       }
       catch (const serial::IOException &e)
       {
