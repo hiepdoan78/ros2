@@ -69,6 +69,7 @@ https://youtu.be/xy0PPB-s8K4
 * Automated container lifting mechanism
 
 ## 📂 Project Structure
+```text
 ros2/
 │
 ├── stm32_firmware/      # Vehicle control firmware
@@ -80,6 +81,7 @@ ros2/
 │   └── serial/          # Drive for UART comunication
 └── README.md
 
+```
 ## ⚙️ Hardware Setup
 
 * Raspberry Pi 5 (Main processor / ROS node host)
